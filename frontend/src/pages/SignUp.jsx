@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router';
 
 import InputWithLabel from '../components/userData/InputWithLabel';
 
-import { setUserData, signUp, login } from "../features/userReducer/userSlice";
+import { setUserData, signUp } from "../features/userReducer/userSlice";
 
 
 

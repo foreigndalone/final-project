@@ -7,6 +7,7 @@ import { Routes, Route } from "react-router"
 
 import SignUp from './pages/SignUp'
 import Main from './pages/Main'
+import Login from './pages/Login'
 
 function App() {
 
@@ -15,6 +16,7 @@ function App() {
       <Routes>
         <Route path='/signUp' element={<SignUp/>}/>
         <Route path='/main' element={<Main/>}/>
+        <Route path='/login' element={<Login/>}/>
       </Routes>
     </>
   )

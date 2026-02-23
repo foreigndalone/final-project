@@ -2,14 +2,14 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 export const signUp = createAsyncThunk(
     "user/signUp",
-    async ({ email, username, password }, { rejectWithValue }) => {
+    async ({ username, email, password }, { rejectWithValue }) => {
         try {
         const res = await fetch("http://localhost:5001/api/user/signup", {
             method: "POST",
             headers: {
             "Content-Type": "application/json",
             },
-            body: JSON.stringify({ email, username, password }),
+            body: JSON.stringify({ username, email, password }),
         });
 
         if (!res.ok) {

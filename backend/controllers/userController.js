@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken')
 const cookie = require('cookie-parser')
 
 const signUpUser = async(req, res) => {
-    const {email, username, password} = req.body
+    console.log('signup')
+    const { username, email, password} = req.body
     
     try{
         const isExist = await userModel.getUserByMail(email)
@@ -19,7 +20,6 @@ const signUpUser = async(req, res) => {
             ACCESS_TOKEN_SECRET,
             { expiresIn: "1d" }
         );
-        console.log()
 
         // ------- УСТАНАВЛИВАЕМ КУКУ -------
         res.cookie("token", token, {
@@ -28,7 +28,8 @@ const signUpUser = async(req, res) => {
         });
         return res.status(201).json({
             message: 'User registrated successfuly',
-            user
+            user,
+            token
         })
     }catch(err){
         console.log(err)
@@ -39,13 +40,20 @@ const signUpUser = async(req, res) => {
 
 
 const loginUpUser = async(req, res) => {
+    console.log('login')
     const {username, password} = req.body
+
+
+    if (!username || !password) {
+        return res.status(400).json({ message: "Username and password required" });
+    }
+    
     try{
         const user = await userModel.getUserByName(username)
         if(!user){
             return res.status(401).json({ message: "Wrong password or email" })
         }
-        const match = await bcrypt.compare(password, user.password)
+        const match = await bcrypt.compare(password, user.password_hash)
           if (!match) {
             return res.status(401).json({ message: "Wrong password" });
         }
@@ -59,6 +67,10 @@ const loginUpUser = async(req, res) => {
             maxAge: 24 * 60 * 60 * 1000,
             httpOnly: true
         })
+        console.log(password)
+        console.log(user.password_hash)
+        console.log("REQ BODY:", req.body)
+        console.log("FOUND USER:", user)
 
         return res.status(200).json({
             message: 'Login successfuly',

@@ -17,7 +17,7 @@ export const signUp = createAsyncThunk(
             return rejectWithValue(errorData.message || "Failed to register");
         }
 
-        const data = await res.json(); // обычно { user: {...}, token: "..." }
+        const data = await res.json();
         return data;
         } catch (err) {
         return rejectWithValue(err.message);
@@ -47,7 +47,25 @@ export const login = createAsyncThunk(
         }
     }
 );
-
+export const changeData = createAsyncThunk(
+  "user/change",
+  async(information, {rejectWithValue})=>{
+    try{
+      const res = await fetch("http://localhost:5001/api/user/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(information),
+      })
+      if(!res.ok){
+        const errorData = await res.json();
+        return rejectWithValue(errorData.message || "Failed to change data")
+      }
+      const data = await res.json()
+      return data
+    }catch(err){
+      return rejectWithValue(err.message);
+    }
+  })
 const initialState = {
     user: {
         id: null,

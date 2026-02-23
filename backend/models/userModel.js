@@ -23,7 +23,7 @@ module.exports = {
         try{
             const user = await db('users')
             .select("id", "username", "password_hash")
-            .where({username: username.toLowerCase()})
+            .where({username: username})
             .first();
             return user
         }catch(err){
@@ -43,5 +43,27 @@ module.exports = {
         console.log(err);
         throw err;
         }
+    },
+    addUsersData: async (id, data) => {
+    try {
+        const updateData = { ...data };
+
+        // если есть пароль — хэшируем
+        if (updateData.password) {
+        const hash = await bcrypt.hash(updateData.password, 10);
+        updateData.password_hash = hash;
+        delete updateData.password;
+        }
+
+        const [updatedUser] = await db("users")
+        .where({ id }) // используем id
+        .update(updateData)
+        .returning(["id", "email", "username"]); // name нет, только username
+
+        return updatedUser;
+    } catch (err) {
+        console.log("addUsersData error:", err);
+        throw err;
+    }
     },
 }

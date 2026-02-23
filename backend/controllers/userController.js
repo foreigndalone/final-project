@@ -27,9 +27,9 @@ const signUpUser = async(req, res) => {
             maxAge: 24 * 60 * 60 * 1000 // 1 день
         });
         return res.status(201).json({
-            message: 'User registrated successfuly',
-            user,
-            token
+        message: 'User registrated successfuly',
+        user: { id: user.id, username: user.username, email: user.email }, // id нужен
+        token
         })
     }catch(err){
         console.log(err)
@@ -73,9 +73,9 @@ const loginUpUser = async(req, res) => {
         console.log("FOUND USER:", user)
 
         return res.status(200).json({
-            message: 'Login successfuly',
-            user: {userId: user.id, username: user.username, userStatus: 'active'},
-            token: accessToken
+        message: 'Login successfuly',
+        user: { id: user.id, username: user.username, email: user.email }, // обязательно id
+        token: accessToken
         })
 
     }catch(err){
@@ -83,4 +83,21 @@ const loginUpUser = async(req, res) => {
         return res.status(500).json({ message: "server error" });
     }
 }
-module.exports = {signUpUser, loginUpUser}
+
+const updateUser = async (req, res) => {
+  try {
+    const { id, ...data } = req.body; // берём id из тела запроса
+    if (!id) return res.status(400).json({ message: "User ID required" });
+
+    const updated = await userModel.addUsersData(id, data);
+
+    return res.status(200).json({
+      message: "User updated",
+      user: updated
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "server error" });
+  }
+};
+module.exports = {signUpUser, loginUpUser, updateUser}

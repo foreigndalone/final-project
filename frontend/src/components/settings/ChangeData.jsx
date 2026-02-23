@@ -21,7 +21,7 @@ const ChangeData = () => {
     e.preventDefault();
 
     // формируем объект для апдейта, включая id
-    const updatedData = { id: user.id };
+    const updatedData = { id: Number(user.id) };
     if (username.trim() !== '') updatedData.username = username;
     if (email.trim() !== '') updatedData.email = email;
     if (password.trim() !== '') updatedData.password = password;
@@ -29,6 +29,7 @@ const ChangeData = () => {
     if (Object.keys(updatedData).length > 1) { // >1, потому что id всегда есть
       dispatch(updateUser(updatedData));
       dispatch(changeData(updatedData));
+      console.log("SENDING:", updatedData);
       
       console.log('User updated:', updatedData);
     } else {

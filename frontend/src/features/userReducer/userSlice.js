@@ -29,6 +29,7 @@ export const login = createAsyncThunk(
     "user/login",
     async ({ username, password }, { rejectWithValue }) => {
         try {
+          console.log('login')
         const res = await fetch("http://localhost:5001/api/user/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -41,6 +42,7 @@ export const login = createAsyncThunk(
         }
 
         const data = await res.json();
+        console.log('login2')
         return data; 
         } catch (err) {
         return rejectWithValue(err.message);
@@ -49,13 +51,20 @@ export const login = createAsyncThunk(
 );
 export const changeData = createAsyncThunk(
   "user/change",
-  async(information, {rejectWithValue})=>{
+  async(updatedData, {rejectWithValue, getState})=>{
     try{
-      const res = await fetch("http://localhost:5001/api/user/update", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(information),
+      const state = getState();
+      const accessToken = state.userReducer.token; // берём токен из Redux
+
+      const res = await fetch('http://localhost:5001/api/user/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(updatedData)
       })
+
       if(!res.ok){
         const errorData = await res.json();
         return rejectWithValue(errorData.message || "Failed to change data")
@@ -116,7 +125,7 @@ extraReducers: (builder) => {
     .addCase(login.fulfilled, (state, action) => {
       state.loading = false;
       state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.token = action.payload.accessToken;
       state.isAuthenticated = true;
     })
     .addCase(login.rejected, (state, action) => {

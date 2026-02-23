@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const cookie = require('cookie-parser')
 
+const { generateTokens } = require('../utils/jwt.js');
+
 const signUpUser = async(req, res) => {
     console.log('signup')
     const { username, email, password} = req.body
@@ -39,57 +41,40 @@ const signUpUser = async(req, res) => {
 
 
 
-const loginUpUser = async(req, res) => {
-    console.log('login')
-    const {username, password} = req.body
 
+const loginUpUser = async (req, res) => {
+    const { username, password } = req.body;
 
-    if (!username || !password) {
-        return res.status(400).json({ message: "Username and password required" });
-    }
-    
-    try{
-        const user = await userModel.getUserByName(username)
-        if(!user){
-            return res.status(401).json({ message: "Wrong password or email" })
-        }
-        const match = await bcrypt.compare(password, user.password_hash)
-          if (!match) {
-            return res.status(401).json({ message: "Wrong password" });
-        }
-        const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET
-        const accessToken = jwt.sign(
-            {userId: user.id, username: user.username},
-            ACCESS_TOKEN_SECRET,
-            {expiresIn: "1d"}
-        )
-        res.cookie('token', accessToken, {
-            maxAge: 24 * 60 * 60 * 1000,
-            httpOnly: true
-        })
-        console.log(password)
-        console.log(user.password_hash)
-        console.log("REQ BODY:", req.body)
-        console.log("FOUND USER:", user)
+    const user = await userModel.getUserByName(username);
+    if (!user) return res.status(401).json({ message: "Wrong credentials" });
 
-        return res.status(200).json({
-        message: 'Login successfuly',
-        user: { id: user.id, username: user.username, email: user.email }, // обязательно id
-        token: accessToken
-        })
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) return res.status(401).json({ message: "Wrong credentials" });
 
-    }catch(err){
-        console.error(err);
-        return res.status(500).json({ message: "server error" });
-    }
-}
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    // refresh кладём в cookie
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: false, // true в production
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res.status(200).json({
+        user: { id: user.id, username: user.username, email: user.email },
+        accessToken
+    });
+};
 
 const updateUser = async (req, res) => {
   try {
+    console.log("REQ BODY:", req.body);
     const { id, ...data } = req.body; // берём id из тела запроса
     if (!id) return res.status(400).json({ message: "User ID required" });
 
     const updated = await userModel.addUsersData(id, data);
+    
 
     return res.status(200).json({
       message: "User updated",
@@ -100,4 +85,27 @@ const updateUser = async (req, res) => {
     return res.status(500).json({ message: "server error" });
   }
 };
-module.exports = {signUpUser, loginUpUser, updateUser}
+
+
+const refreshToken = (req, res) => {
+    const token = req.cookies.refreshToken;
+
+    if (!token) {
+        return res.status(401).json({ message: "No refresh token" });
+    }
+
+    jwt.verify(token, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ message: "Invalid refresh token" });
+        }
+
+        const newAccessToken = jwt.sign(
+            { userId: decoded.userId, username: decoded.username },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: '15m' }
+        );
+
+        return res.status(200).json({ accessToken: newAccessToken });
+    });
+};
+module.exports = {signUpUser, loginUpUser, updateUser, refreshToken}

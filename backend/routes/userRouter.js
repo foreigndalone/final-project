@@ -7,6 +7,9 @@ const router = Router()
 router.post('/signup', userController.signUpUser)
 router.post('/login', userController.loginUpUser)
 router.put('/update', userController.updateUser);
+// router.post('/refresh', userController.refreshToken);
+
+
 // router.post('/logout', userController.logOutUser)
 
 

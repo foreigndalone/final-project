@@ -54,6 +54,7 @@ module.exports = {
         updateData.password_hash = hash;
         delete updateData.password;
         }
+        
 
         const [updatedUser] = await db("users")
         .where({ id }) // используем id

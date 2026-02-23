@@ -1,21 +1,22 @@
-require('dotenv').config()
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
+const verifyToken = (req, res, next) => {
+    const authHeader = req.headers.authorization;
 
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
-const verifyToken = async(req, res, next) =>{
-    const token = req.cookies["token"]
-
-    if(!token){
-        return res.status(401).json({message: 'Unauthorized user'})
+    if (!authHeader) {
+        return res.status(401).json({ message: "No token provided" });
     }
-    jwt.verify(token, ACCESS_TOKEN_SECRET, (err, decoded)=>{
-        if(err){
-            res.status(403).json({message: "Forbidden access"})
-            return
+
+    const token = authHeader.split(" ")[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ message: "Invalid or expired token" });
         }
-        req.user = decoded
-        next()
-    })
-}
-module.exports = {verifyToken,}
+
+        req.user = decoded;
+        next();
+    });
+};
+
+module.exports = { verifyToken };
